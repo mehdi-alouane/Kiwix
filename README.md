@@ -10,7 +10,7 @@ Kiwix is a small but powerful Javascript library that allows you to easily take 
         .fadeIn()
         .loop()
         .bind( "timeupdate", function() {
-            var timer = buzz.toTimer( this.getTime() );
+            var timer = Kiwix.toTimer( this.getTime() );
             document.getElementById( "timer" ).innerHTML = timer;
         });
 
