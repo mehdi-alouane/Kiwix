@@ -39,7 +39,8 @@ var Kiwix = {
         'ogg': 'audio/ogg',
         'wav': 'audio/wav',
         'aac': 'audio/aac',
-        'm4a': 'audio/x-m4a'
+        'm4a': 'audio/x-m4a',
+        'mp4': 'audio/mp4',
     },
     sounds: [],
     el: document.createElement( 'audio' ),
