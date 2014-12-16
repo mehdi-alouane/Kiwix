@@ -1,9 +1,9 @@
 // ----------------------------------------------------------------------------
 // Kiwix, a Javascript HTML5 Audio library
-// v 1.0.0.1 beta
+// v 1.1.61 first beta
 // Licensed under the MIT license.
 // ----------------------------------------------------------------------------
-// Copyright (C) 2013 Mehdi alouane
+// Copyright (C) 2013-2014  Mehdi alouane
 // ----------------------------------------------------------------------------
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files ( the "Software" ), to deal
