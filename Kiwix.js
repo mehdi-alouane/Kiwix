@@ -2,10 +2,12 @@
 // kiwix, a Javascript HTML5 Audio library
 // Licensed under the MIT license.
 // ----------------------------------------------------------------------------
-// Copyright (C) MEHDI-ALOUANE 
-// ----------------------------------------------------------------------------
+// Copyright (C) MEHDI-ALOUANE
+// -
 
 (function (context, factory) {
+    "use strict";
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = factory();
     } else if (typeof define === 'function' && define.amd) {
@@ -14,11 +16,11 @@
         context.kiwix = factory();
     }
 })(this, function () {
+    "use strict";
 
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
 
     var kiwix = {
-        audioCtx: window.AudioContext ? new AudioContext() : null,
         defaults: {
             autoplay: false,
             duration: 5000,
@@ -39,6 +41,19 @@
         },
         sounds: [],
         el: document.createElement('audio'),
+        
+        getAudioContext: function() {
+            if (this.audioCtx === undefined) {
+                try {
+                    this.audioCtx = AudioContext ? new AudioContext() : null;
+                } catch (e) {
+                    // There is a limit to how many contexts you can have, so fall back in case of errors constructing it
+                    this.audioCtx = null;
+                }
+            }
+          
+            return this.audioCtx;
+        },
 
         sound: function (src, options) {
             options = options || {};
@@ -229,7 +244,7 @@
                     if (set === true) {
                         set = false;
                         this.sound.currentTime = time;
-                   }
+                    }
                 });
 
                 return this;
@@ -451,7 +466,7 @@
 
                     for (var i = 0; i < events.length; i++) {
                         var namespace = events[i].idx.split('.');
-                        if (events[i].idx == idx || (namespace[1] && namespace[1] == idx.replace('.', ''))) {
+                        if (events[i].idx === idx || (namespace[1] && namespace[1] === idx.replace('.', ''))) {
                             this.sound.removeEventListener(type, events[i].func, true);
                             // remove event
                             events.splice(i, 1);
@@ -481,7 +496,7 @@
                 return this;
             };
 
-            this.trigger = function (types) {
+            this.trigger = function (types, detail) {
                 if (!supported) {
                     return this;
                 }
@@ -494,10 +509,12 @@
                     for (var i = 0; i < events.length; i++) {
                         var eventType = events[i].idx.split('.');
 
-                        if (events[i].idx == idx || (eventType[0] && eventType[0] == idx.replace('.', ''))) {
+                        if (events[i].idx === idx || (eventType[0] && eventType[0] === idx.replace('.', ''))) {
                             var evt = doc.createEvent('HTMLEvents');
 
                             evt.initEvent(eventType[0], false, true);
+
+                            evt.originalEvent = detail;
 
                             this.sound.dispatchEvent(evt);
                         }
@@ -592,6 +609,26 @@
                 }
             };
 
+            this.addSource = function (src) {
+                var self   = this,
+                    source = doc.createElement('source');
+
+                source.src = src;
+
+                if (kiwix.types[getExt(src)]) {
+                    source.type = kiwix.types[getExt(src)];
+                }
+
+                this.sound.appendChild(source);
+
+                source.addEventListener('error', function (e) {
+                    self.sound.networkState = 3;
+                    self.trigger('sourceerror', e);
+                });
+
+                return source;
+            };
+
             // privates
             function timerangeToArray(timeRange) {
                 var array = [],
@@ -611,50 +648,42 @@
                 return filename.split('.').pop();
             }
 
-            function addSource(sound, src) {
-                var source = doc.createElement('source');
-
-                source.src = src;
-
-                if (kiwix.types[getExt(src)]) {
-                    source.type = kiwix.types[getExt(src)];
-                }
-
-                sound.appendChild(source);
-            }
-
             // init
             if (supported && src) {
 
                 for (var i in kiwix.defaults) {
                     if (kiwix.defaults.hasOwnProperty(i)) {
-                        if (options[i] === undefined)
+                        if (options[i] === undefined) {
                             options[i] = kiwix.defaults[i];
+                        }
                     }
                 }
 
                 this.sound = doc.createElement('audio');
                 
                 // Use web audio if possible to improve performance.
-                if (options.webAudioApi && kiwix.audioCtx) {
-                    this.source = kiwix.audioCtx.createMediaElementSource(this.sound);
-                    this.source.connect(kiwix.audioCtx.destination);
+                if (options.webAudioApi) {
+                    var audioCtx = kiwix.getAudioContext();
+                    if (audioCtx) {
+                      this.source = audioCtx.createMediaElementSource(this.sound);
+                      this.source.connect(audioCtx.destination);
+                    }
                 }
 
                 if (src instanceof Array) {
                     for (var j in src) {
                         if (src.hasOwnProperty(j)) {
-                            addSource(this.sound, src[j]);
+                            this.addSource(src[j]);
                         }
                     }
                 } else if (options.formats.length) {
                     for (var k in options.formats) {
                         if (options.formats.hasOwnProperty(k)) {
-                            addSource(this.sound, src + '.' + options.formats[k]);
+                            this.addSource(src + '.' + options.formats[k]);
                         }
                     }
                 } else {
-                    addSource(this.sound, src);
+                    this.addSource(src);
                 }
 
                 if (options.loop) {
@@ -700,7 +729,7 @@
 
                 for (var a = 0; a < soundArray.length; a++) {
                     for (var i = 0; i < sounds.length; i++) {
-                        if (sounds[i] == soundArray[a]) {
+                        if (sounds[i] === soundArray[a]) {
                             sounds.splice(i, 1);
                             break;
                         }
@@ -901,11 +930,11 @@
         fromTimer: function (time) {
             var splits = time.toString().split(':');
 
-            if (splits && splits.length == 3) {
+            if (splits && splits.length === 3) {
                 time = (parseInt(splits[0], 10) * 3600) + (parseInt(splits[1], 10) * 60) + parseInt(splits[2], 10);
             }
 
-            if (splits && splits.length == 2) {
+            if (splits && splits.length === 2) {
                 time = (parseInt(splits[0], 10) * 60) + parseInt(splits[1], 10);
             }
 
